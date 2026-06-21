@@ -1,8 +1,8 @@
-// features/products/screens/product_detail_screen.dart
 
 import 'package:cartify/data/models/product_model.dart';
 import 'package:cartify/features/cart/providers/cart_provider.dart';
 import 'package:cartify/features/cart/screens/cart_page.dart';
+import 'package:cartify/features/products/providers/product_provider.dart';
 import 'package:cartify/features/products/widgets/product_detail_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +12,6 @@ import 'package:cartify/core/constants/app_constants.dart';
 import 'package:cartify/features/products/widgets/product_image.dart';
 import 'package:cartify/features/products/widgets/quantity_selector.dart';
 import 'package:cartify/features/products/widgets/action_buttons.dart';
-import 'package:cartify/features/products/widgets/rating_widget.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -25,78 +24,88 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
-  int _quantity = 1;
-  bool _isLiked = false;
 
-  // ==================== GETTERS ====================
-
-  double get _totalPrice => widget.product.price * _quantity;
-  double get _originalPrice => widget.product.price * 1.3 * _quantity;
-  bool get _isDark => ref.watch(themeProvider);
-
-  // ==================== LIFECYCLE ====================
+  @override
+  void dispose() {
+    ref.read(quantityProvider.notifier).state = 1;
+    ref.read(isLikedProvider.notifier).state = false;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ref.watch(themeProvider);
+    final quantity = ref.watch(quantityProvider);
+    final isLiked = ref.watch(isLikedProvider);
+    final totalPrice = ref.watch(totalPriceProvider(widget.product));
+    final originalPrice = ref.watch(originalPriceProvider(widget.product));
+
     return Scaffold(
-      backgroundColor: _isDark ? Colors.grey[900] : Colors.grey[50],
-      appBar: _buildAppBar(),
+      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
+      appBar: _buildAppBar(isDark, isLiked),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ProductImage(product: widget.product, isDark: _isDark),
-            _buildProductDetails(),
+            ProductImage(product: widget.product, isDark: isDark),
+            _buildProductDetails(isDark, quantity, totalPrice, originalPrice),
           ],
         ),
       ),
     );
   }
 
-  // ==================== APP BAR ====================
-
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(bool isDark, bool isLiked) {
     return AppBar(
-      backgroundColor: _isDark ? Colors.grey[900] : Colors.white,
+      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
       elevation: 0,
       leading: IconButton(
         icon: Icon(
           Icons.arrow_back_ios,
-          color: _isDark ? Colors.white : Colors.black,
+          color: isDark ? Colors.white : Colors.black,
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      actions: [_buildFavoriteButton(), _buildShareButton()],
+      actions: [
+        _buildFavoriteButton(isDark, isLiked),
+        _buildShareButton(isDark),
+      ],
     );
   }
 
-  IconButton _buildFavoriteButton() {
+  IconButton _buildFavoriteButton(bool isDark, bool isLiked) {
     return IconButton(
       icon: Icon(
-        _isLiked ? Icons.favorite : Icons.favorite_border,
-        color: _isLiked ? Colors.red : (_isDark ? Colors.white : Colors.black),
+        isLiked ? Icons.favorite : Icons.favorite_border,
+        color: isLiked ? Colors.red : (isDark ? Colors.white : Colors.black),
       ),
       onPressed: _toggleFavorite,
+      splashRadius: 24,
     );
   }
 
-  IconButton _buildShareButton() {
+  IconButton _buildShareButton(bool isDark) {
     return IconButton(
       icon: Icon(
         Icons.share_outlined,
-        color: _isDark ? Colors.white : Colors.black,
+        color: isDark ? Colors.white : Colors.black,
       ),
       onPressed: _shareProduct,
+      splashRadius: 24,
     );
   }
 
-  // ==================== PRODUCT DETAILS ====================
-
-  Widget _buildProductDetails() {
+ Widget _buildProductDetails(
+    bool isDark,
+    int quantity,
+    double totalPrice,
+    double originalPrice,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppConstants.paddingLarge),
       decoration: BoxDecoration(
-        color: _isDark ? Colors.grey[850] : Colors.white,
+        color: isDark ? Colors.grey[850] : Colors.white,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppConstants.borderRadiusLarge),
         ),
@@ -104,24 +113,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitle(),
+          _buildTitle(isDark),
           const SizedBox(height: AppConstants.spacingSmall),
-          const RatingWidget(
-            rating: 4.5,
-            totalRatings: 2345,
-            totalReviews: 256,
-          ),
+          _buildPriceAndQuantity(isDark, quantity, totalPrice, originalPrice),
           const SizedBox(height: AppConstants.spacingMedium),
-          _buildPriceAndQuantity(),
+          _buildDescription(isDark),
           const SizedBox(height: AppConstants.spacingMedium),
-          _buildDescription(),
-          const SizedBox(height: AppConstants.spacingMedium),
-          ProductDetailsSection(isDark: _isDark),
+          ProductDetailsSection(isDark: isDark),
           const SizedBox(height: AppConstants.spacingMedium),
           ActionButtons(
-            quantity: _quantity,
+            quantity: quantity,
             product: widget.product,
-            isDark: _isDark,
+            isDark: isDark,
             onAddToCart: _addToCart,
             onBuyNow: _buyNow,
           ),
@@ -131,35 +134,42 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
-  // ==================== UI COMPONENTS ====================
-
-  Widget _buildTitle() {
+  Widget _buildTitle(bool isDark) {
     return Text(
       widget.product.title,
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: _isDark ? Colors.white : Colors.black,
+        color: isDark ? Colors.white : Colors.black,
         height: 1.3,
       ),
     );
   }
 
-  Widget _buildPriceAndQuantity() {
+  Widget _buildPriceAndQuantity(
+    bool isDark,
+    int quantity,
+    double totalPrice,
+    double originalPrice,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildPriceSection(),
+        _buildPriceSection(isDark, totalPrice, originalPrice),
         QuantitySelector(
-          quantity: _quantity,
-          isDark: _isDark,
+          quantity: quantity,
+          isDark: isDark,
           onQuantityChanged: _updateQuantity,
         ),
       ],
     );
   }
 
-  Widget _buildPriceSection() {
+  Widget _buildPriceSection(
+    bool isDark,
+    double totalPrice,
+    double originalPrice,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,25 +177,25 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           'Price',
           style: TextStyle(
             fontSize: 14,
-            color: _isDark ? Colors.grey[400] : Colors.grey[600],
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
           ),
         ),
         Row(
           children: [
             Text(
-              '₹${_totalPrice.toStringAsFixed(2)}',
+              '₹${totalPrice.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: _isDark ? Colors.white : Colors.black,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
             const SizedBox(width: AppConstants.spacingSmall),
             Text(
-              '₹${_originalPrice.toStringAsFixed(2)}',
+              '₹${originalPrice.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 16,
-                color: _isDark ? Colors.grey[500] : Colors.grey[400],
+                color: isDark ? Colors.grey[500] : Colors.grey[400],
                 decoration: TextDecoration.lineThrough,
               ),
             ),
@@ -215,7 +225,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -226,7 +236,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: _isDark ? Colors.white : Colors.black,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         const SizedBox(height: AppConstants.spacingSmall),
@@ -235,62 +245,71 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           style: TextStyle(
             fontSize: 15,
             height: 1.6,
-            color: _isDark ? Colors.grey[300] : Colors.grey[700],
+            color: isDark ? Colors.grey[300] : Colors.grey[700],
           ),
         ),
       ],
     );
   }
 
-  // ==================== ACTIONS ====================
-
   void _toggleFavorite() {
-    setState(() => _isLiked = !_isLiked);
+    final currentState = ref.read(isLikedProvider);
+    final newState = !currentState;
+    ref.read(isLikedProvider.notifier).state = newState;
+
     _showSnackBar(
-      _isLiked ? 'Added to favorites ❤️' : 'Removed from favorites',
-      _isLiked ? Colors.green : Colors.grey,
+      message: newState ? 'Added to favorites ❤️' : 'Removed from favorites',
+      color: newState ? Colors.green : Colors.grey,
     );
   }
 
   void _updateQuantity(int newQuantity) {
-    setState(() => _quantity = newQuantity);
+    if (newQuantity < 1) return; 
+    ref.read(quantityProvider.notifier).state = newQuantity;
   }
 
   void _addToCart() {
-    for (int i = 0; i < _quantity; i++) {
+    final quantity = ref.read(quantityProvider);
+    for (int i = 0; i < quantity; i++) {
       ref.read(cartProvider.notifier).addToCart(widget.product);
     }
+
     _showSnackBar(
-      '$_quantity x ${widget.product.title} added to cart!',
-      Colors.green,
+      message: '$quantity x ${widget.product.title} added to cart!',
+      color: Colors.green,
       action: SnackBarAction(
         label: 'View Cart',
         textColor: Colors.white,
-        onPressed: () => _navigateToCart(),
+        onPressed: _navigateToCart,
       ),
     );
   }
 
   void _buyNow() {
-    for (int i = 0; i < _quantity; i++) {
+    final quantity = ref.read(quantityProvider);
+    for (int i = 0; i < quantity; i++) {
       ref.read(cartProvider.notifier).addToCart(widget.product);
     }
     _navigateToCart();
   }
 
   void _shareProduct() {
-    Share.share('''
-🛍️ Check out this product on Cartify!
+    final product = widget.product;
+    final shareMessage =
+        '''
+🛍️ Check out this amazing product on Cartify!
 
-📦 Product: ${widget.product.title}
-💰 Price: ₹${widget.product.price.toStringAsFixed(2)}
+📦 ${product.title}
+💰 Price: ₹${product.price.toStringAsFixed(2)}
 ⭐ Rating: 4.5/5
+🏷️ Category: ${product.category}
 
-Shop now and get amazing deals! 🎉
-      ''', subject: 'Check out ${widget.product.title}');
+👇 Download Cartify now and get amazing deals! 🎉
+    ''';
+
+    // ignore: deprecated_member_use
+    Share.share(shareMessage, subject: 'Check out ${product.title} on Cartify');
   }
-
-  // ==================== NAVIGATION ====================
 
   void _navigateToCart() {
     Navigator.push(
@@ -299,14 +318,19 @@ Shop now and get amazing deals! 🎉
     );
   }
 
-  // ==================== HELPERS ====================
-
-  void _showSnackBar(String message, Color color, {SnackBarAction? action}) {
+  void _showSnackBar({
+    required String message,
+    required Color color,
+    SnackBarAction? action,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
+            Icon(
+              color == Colors.green ? Icons.check_circle : Icons.info,
+              color: Colors.white,
+            ),
             const SizedBox(width: AppConstants.spacingSmall),
             Expanded(
               child: Text(

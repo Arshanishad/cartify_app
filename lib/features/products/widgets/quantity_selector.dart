@@ -1,5 +1,3 @@
-// features/products/widgets/quantity_selector.dart
-
 import 'package:flutter/material.dart';
 import 'package:cartify/core/constants/app_constants.dart';
 

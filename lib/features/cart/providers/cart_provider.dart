@@ -14,6 +14,12 @@ class CartNotifier extends StateNotifier<List<Product>> {
     saveCart(state);
   }
 
+  void addMultiple(Product product, int quantity) {
+    final newItems = List.generate(quantity, (_) => product);
+    state = [...state, ...newItems];
+    saveCart(state);
+  }
+
   void removeFromCart(Product product) {
     state = state.where((p) => p.id != product.id).toList();
     saveCart(state);
@@ -26,4 +32,3 @@ class CartNotifier extends StateNotifier<List<Product>> {
 
   double get total => state.fold(0.0, (sum, item) => sum + item.price);
 }
-

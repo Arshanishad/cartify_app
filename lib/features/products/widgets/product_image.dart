@@ -1,10 +1,7 @@
-// features/products/widgets/product_image.dart
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cartify/data/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:cartify/core/constants/app_constants.dart';
 
 class ProductImage extends StatelessWidget {
   final Product product;
@@ -19,7 +16,6 @@ class ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return Hero(
       tag: product.id,
       child: Container(

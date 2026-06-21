@@ -1,11 +1,8 @@
-// features/products/widgets/product_details_section.dart
-
 import 'package:flutter/material.dart';
 import 'package:cartify/core/constants/app_constants.dart';
 
 class ProductDetailsSection extends StatelessWidget {
   final bool isDark;
-
   const ProductDetailsSection({
     super.key,
     required this.isDark,

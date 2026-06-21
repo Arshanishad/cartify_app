@@ -7,6 +7,26 @@ import 'package:cartify/core/theme.dart';
 import 'package:cartify/features/products/providers/product_provider.dart';
 import 'package:cartify/features/products/screens/product_detail_screen.dart';
 
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+final filteredProductsProvider = Provider<List<Product>>((ref) {
+  final products = ref.watch(productProvider);
+  final searchQuery = ref.watch(searchQueryProvider);
+
+  return products.when(
+    data: (data) {
+      if (searchQuery.isEmpty) return data;
+      final query = searchQuery.toLowerCase().trim();
+      return data.where((product) {
+        return product.title.toLowerCase().contains(query) ||
+            product.description.toLowerCase().contains(query);
+      }).toList();
+    },
+    loading: () => [],
+    error: (_, _) => [],
+  );
+});
+
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -16,7 +36,6 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void dispose() {
@@ -26,8 +45,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(productProvider);
     final isDark = ref.watch(themeProvider);
+    final productsState = ref.watch(productProvider.select((value) => value));
+    final filteredProducts = ref.watch(filteredProductsProvider);
+    final searchQuery = ref.watch(searchQueryProvider.select((value) => value));
+    final isSearching = searchQuery.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -42,9 +64,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: TextField(
             controller: _searchController,
             autofocus: true,
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black,
-            ),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
             decoration: InputDecoration(
               hintText: 'Search products...',
               hintStyle: TextStyle(
@@ -62,18 +82,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
                       onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
+                        _searchController.clear();
+                        ref.read(searchQueryProvider.notifier).state = '';
                       },
                     )
                   : null,
             ),
             onChanged: (value) {
-              setState(() {
-                _searchQuery = value.toLowerCase().trim();
-              });
+              ref.read(searchQueryProvider.notifier).state = value;
             },
           ),
         ),
@@ -85,72 +101,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: products.when(
+      body: productsState.when(
         data: (data) {
-          // Filter products based on search query
-          final filteredProducts = _searchQuery.isEmpty
-              ? data
-              : data.where((product) {
-                  return product.title.toLowerCase().contains(_searchQuery) ||
-                      product.description.toLowerCase().contains(_searchQuery);
-                }).toList();
-
-          if (filteredProducts.isEmpty && _searchQuery.isNotEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 80,
-                    color: isDark ? Colors.grey[600] : Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No results found for "$_searchQuery"',
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.grey[600],
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _searchQuery = '';
-                      });
-                    },
-                    child: const Text('Clear Search'),
-                  ),
-                ],
-              ),
+          if (filteredProducts.isEmpty && isSearching) {
+            return _buildEmptyState(
+              icon: Icons.search_off,
+              message: 'No results found for "$searchQuery"',
+              isDark: isDark,
+              showButton: true,
+              onPressed: () {
+                _searchController.clear();
+                ref.read(searchQueryProvider.notifier).state = '';
+              },
             );
           }
-
           if (filteredProducts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 80,
-                    color: isDark ? Colors.grey[600] : Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Start searching for products',
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.grey[600],
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
+            return _buildEmptyState(
+              icon: Icons.shopping_bag_outlined,
+              message: 'Start searching for products',
+              isDark: isDark,
+              showButton: false,
             );
           }
-
           return GridView.builder(
             padding: const EdgeInsets.all(8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -170,11 +142,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         error: (e, _) => Center(
           child: Text(
             "Error loading products: ${e.toString()}",
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black,
-            ),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String message,
+    required bool isDark,
+    required bool showButton,
+    VoidCallback? onPressed,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 80,
+            color: isDark ? Colors.grey[600] : Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.grey[600],
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (showButton) ...[
+            const SizedBox(height: 8),
+            TextButton(onPressed: onPressed, child: const Text('Clear Search')),
+          ],
+        ],
       ),
     );
   }
@@ -207,7 +211,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   width: double.infinity,
                   placeholder: (context, url) => Shimmer.fromColors(
                     baseColor: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                    highlightColor: isDark ? Colors.grey[600]! : Colors.grey[100]!,
+                    highlightColor: isDark
+                        ? Colors.grey[600]!
+                        : Colors.grey[100]!,
                     child: Container(
                       color: isDark ? Colors.grey[700] : Colors.grey[300],
                     ),

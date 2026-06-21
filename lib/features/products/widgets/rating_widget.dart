@@ -1,5 +1,3 @@
-// features/products/widgets/rating_widget.dart
-
 import 'package:flutter/material.dart';
 
 class RatingWidget extends StatelessWidget {

@@ -1,5 +1,3 @@
-// features/products/widgets/category_list.dart
-
 import 'package:flutter/material.dart';
 import 'package:cartify/core/constants/app_constants.dart';
 import 'package:cartify/features/products/screens/product_list_screen.dart';
@@ -50,7 +48,7 @@ class CategoryList extends StatelessWidget {
 
   Widget _buildCategoryGrid() {
     return SizedBox(
-      height: 110, // ✅ Enough space (important)
+      height: 110, 
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -76,13 +74,8 @@ class CategoryList extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 4),
-
-            /// ICON
             _buildCategoryIcon(category),
-
             const SizedBox(height: 6),
-
-            /// TEXT (IMPORTANT FIX)
             Expanded(
               child: Center(
                 child: Text(

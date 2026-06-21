@@ -18,11 +18,10 @@ class CartScreen extends ConsumerWidget {
       appBar: _buildAppBar(cartItems.length, isDarkMode, ref, context),
       body: cartItems.isEmpty
           ? _buildEmptyState(isDarkMode, context)
-          : _buildCartContent(cartItems, totalPrice, isDarkMode, ref, context),
+          : _buildCartContent(cartItems.cast<Product>(), totalPrice, isDarkMode, ref, context),
     );
   }
 
-  //AppBar
   PreferredSizeWidget _buildAppBar(
     int itemCount,
     bool isDarkMode,
