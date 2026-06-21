@@ -1,5 +1,3 @@
-
-
 class AppConstants {
   // Grid settings
   static const int gridCrossAxisCount = 2;
