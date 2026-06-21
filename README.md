@@ -1,4 +1,4 @@
-<!-- # 🛒 Cartify – E-commerce Product Listing App
+# 🛒 Cartify – E-commerce Product Listing App
 
 Cartify is a Flutter-based e-commerce product listing application built using clean architecture and Riverpod state management. It demonstrates API integration, cart management, and modern UI/UX practices.
 
@@ -11,7 +11,7 @@ Cartify is a Flutter-based e-commerce product listing application built using cl
 * 🛒 Add to Cart Functionality
 * 🧾 Cart Page with Total Calculation
 * 💾 Cart Persistence (SharedPreferences)
-* ❤️ Favorite Toggle (UI state change)
+* ❤️ Favorite Toggle (Icon state change)
 * 📤 Share Product Feature
 * 🔎 Search Products
 * 🗂️ Category Filtering
@@ -75,13 +75,14 @@ https://fakestoreapi.com/products
 
 ## 📸 Screenshots
 
-| Home Screen                             | Product Detail                            | Cart                                    |
-| --------------------------------------- | ----------------------------------------- | --------------------------------------- |
-| ![Home](assets/images/screenshot4.jpeg) | ![Detail](assets/images/screenshot2.jpeg) | ![Cart](assets/images/screenshot3.jpeg) |
+## 📸 Screenshots
+
+| Home Screen | Product Detail | Cart |
+|------------|---------------|------|
+| ![Home](assests/images/screenshot4.jpeg) | ![Detail](assests/images/screenshot2.jpeg) | ![Cart](assests/images/screenshot3.jpeg) |
 
 ### 🌙 Dark Mode
-
-![Dark](assets/images/dark.jpeg)
+![Dark]
 
 ---
 
@@ -89,7 +90,7 @@ https://fakestoreapi.com/products
 
 ```bash
 git clone https://github.com/Arshanishad/cartify_app.git
-cd cartify_app
+cd cartify
 flutter pub get
 flutter run
 ```
@@ -110,7 +111,7 @@ flutter run
 
 * Quantity management in cart
 * Checkout flow
-* Dedicated Favorites screen
+* Favorites screen
 * Backend integration (Node.js)
 
 ---

@@ -1,4 +1,3 @@
-import 'package:cartify/core/constants/image_constants.dart';
 import 'package:cartify/data/models/product_model.dart';
 import 'package:cartify/features/cart/screens/cart_page.dart';
 import 'package:cartify/features/products/screens/category_screen.dart';
