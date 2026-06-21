@@ -1,5 +1,3 @@
-// features/products/widgets/action_buttons.dart
-
 import 'package:cartify/data/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cartify/core/constants/app_constants.dart';

@@ -99,7 +99,7 @@ class CategoryList extends StatelessWidget {
 
   Widget _buildCategoryIcon(CategoryItem category) {
     return CircleAvatar(
-      radius: 24, // ✅ slightly reduced
+      radius: 24, 
       backgroundColor: isDark ? Colors.grey[700] : Colors.blue.shade50,
       child: Icon(
         category.icon,
